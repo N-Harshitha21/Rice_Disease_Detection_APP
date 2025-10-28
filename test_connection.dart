@@ -6,7 +6,7 @@ void main() async {
   print('🔍 Testing Flutter to Backend Connection...');
   print('=' * 50);
   
-  const String baseUrl = 'http://192.168.182.140:5000';
+  const String baseUrl = 'https://rice-disease-detection-app-1.onrender.com';
   
   // Test 1: Health Check
   print('\n1️⃣ Testing Health Endpoint...');

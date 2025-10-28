@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 from datetime import datetime
 import os
+import requests
 
 app = Flask(__name__)
 CORS(app)
@@ -29,36 +30,51 @@ class_names = [
 
 # MODEL CONFIGURATION - Based on your Kaggle notebook analysis
 MODEL_CONFIG = {
-    'model_path': 'rice_emergency_model.h5',  # Your model from Kaggle
-    'input_size': (224, 224),  # Found in your notebook: target_size=(224, 224)
-    'rescale_factor': 1.0/255.0,  # Found in your notebook: rescale=1./255
-    'preprocessing': 'standard'  # Standard rescaling (0-1) as used in your training
+    # IMPORTANT: Replace this with the actual download URL for your model
+    'model_url': 'https://github.com/N-Harshitha21/Rice_Disease_Detection_APP/releases/download/v1.0.0-models/rice_emergency_model.h5',
+    'model_path': 'rice_emergency_model.h5',  # Local path to save the model
+    'input_size': (224, 224),
+    'rescale_factor': 1.0/255.0,
+    'preprocessing': 'standard'
 }
 
 def load_model():
-    """Load your trained model"""
+    """
+    Download the model from a URL if it doesn't exist locally, then load it.
+    """
     global model
+    model_path = MODEL_CONFIG['model_path']
+    model_url = MODEL_CONFIG['model_url']
+
     try:
-        model_path = MODEL_CONFIG['model_path']
-        
-        # Try to load the model
-        if os.path.exists(model_path):
-            print(f"Loading model from {model_path}")
-            model = tf.keras.models.load_model(model_path)
-            print(f"✅ Model loaded successfully!")
-            print(f"Model input shape: {model.input_shape}")
-            print(f"Model output shape: {model.output_shape}")
-            return True
-        else:
-            print(f"❌ Model file not found: {model_path}")
-            print("Available files in current directory:")
-            for file in os.listdir('.'):
-                if file.endswith(('.h5', '.pkl', '.pt')):
-                    print(f"  - {file}")
-            return False
-            
+        # Check if model exists locally
+        if not os.path.exists(model_path):
+            print(f"Model not found locally. Downloading from {model_url}...")
+            try:
+                response = requests.get(model_url, stream=True)
+                response.raise_for_status()  # Raise an exception for bad status codes
+                with open(model_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                print("✅ Model downloaded successfully.")
+            except requests.exceptions.RequestException as e:
+                print(f"❌ Failed to download model: {e}")
+                return False
+
+        # Load the model
+        print(f"Loading model from {model_path}...")
+        model = tf.keras.models.load_model(model_path)
+        print("✅ Model loaded successfully!")
+        print(f"Model input shape: {model.input_shape}")
+        print(f"Model output shape: {model.output_shape}")
+        return True
+
     except Exception as e:
         print(f"❌ Error loading model: {e}")
+        # If loading fails, delete the potentially corrupted file
+        if os.path.exists(model_path):
+            os.remove(model_path)
+            print(f"Removed potentially corrupted model file at {model_path}")
         return False
 
 def preprocess_image(image):
