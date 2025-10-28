@@ -14,17 +14,17 @@ CORS(app)
 # Global variables
 model = None
 
-# RICE DISEASE CLASSES - Updated to match your model's 9 classes
+# RICE DISEASE CLASSES - Fixed to match your actual trained model
 class_names = [
-    'Bacterial Leaf Blight',
-    'Brown Spot',
-    'Healthy Rice Leaf', 
-    'Leaf Blast',
-    'Leaf scald',
-    'Narrow Brown Leaf Spot',
-    'Rice Hispa',
-    'Sheath Blight',
-    'Unknown/Other'  # Adding 9th class to match model output
+    'Bacterial Leaf Blight',      # maps to: bacterial_leaf_blight
+    'Brown Spot',                 # maps to: brown_spot  
+    'Healthy Rice Leaf',          # maps to: healthy
+    'Leaf Blast',                 # maps to: leaf_blast
+    'Leaf Scald',                 # maps to: leaf_scald
+    'Leaf Smut',                  # maps to: leaf_smut
+    'Not a Rice Leaf',            # maps to: not_a_rice_leaf
+    'Rice Hispa',                 # maps to: rice_hispa
+    'Sheath Blight'               # maps to: sheath_blight
 ]
 
 # MODEL CONFIGURATION - Based on your Kaggle notebook analysis
@@ -107,7 +107,8 @@ def get_disease_treatment(disease_name):
         'Healthy Rice Leaf': 'Continue current management practices. Regular monitoring for early disease detection. Maintain proper nutrition and water management.',
         'Leaf Blast': 'Apply systemic fungicides like Tricyclazole 75% WP @ 0.6g/L. Use blast-resistant varieties. Avoid excessive nitrogen fertilization.',
         'Leaf scald': 'Apply fungicides at early infection stage. Remove infected plant debris. Improve air circulation in the field.',
-        'Narrow Brown Leaf Spot': 'Apply preventive fungicides during vulnerable growth stages. Maintain field hygiene. Use certified disease-free seeds.',
+        'Leaf Smut': 'Apply fungicides like Tebuconazole. Remove affected tillers. Use disease-free seeds and resistant varieties.',
+        'Not a Rice Leaf': 'This appears to be not a rice leaf. Please take a photo of a rice leaf for accurate disease detection.',
         'Rice Hispa': 'Apply insecticides like Chlorpyrifos 20% EC @ 2ml/L. Use pheromone traps. Remove grassy weeds around field boundaries.',
         'Sheath Blight': 'Apply fungicides like Validamycin 3% L @ 2.5ml/L. Improve field drainage. Reduce plant density and apply silicon fertilizers.'
     }

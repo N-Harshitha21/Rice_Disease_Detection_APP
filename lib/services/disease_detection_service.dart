@@ -20,7 +20,7 @@ class DiseaseDetectionService {
   /// Local development API URL
   static const String _localUrl = 'http://192.168.182.140:5000';
   
-  /// Switch between production and local API
+  /// Switch between production and local API  
   static const bool _useProductionAPI = false; // Set to true for cloud deployment
   
   /// Demo mode for testing UI without API calls
