@@ -1,0 +1,27 @@
+{
+  "classes": [
+    "leaf_scald",
+    "brown_spot",
+    "leaf_blast",
+    "leaf_smut",
+    "sheath_blight",
+    "healthy",
+    "not_a_rice_leaf",
+    "rice_hispa",
+    "bacterial_leaf_blight"
+  ],
+  "counts": {
+    "leaf_scald": 1000,
+    "brown_spot": 1000,
+    "leaf_blast": 1000,
+    "leaf_smut": 1000,
+    "sheath_blight": 1000,
+    "healthy": 1000,
+    "not_a_rice_leaf": 1000,
+    "rice_hispa": 440,
+    "bacterial_leaf_blight": 1000
+  },
+  "total_images": 8440,
+  "num_classes": 9,
+  "imbalance_ratio": 2.272727272727273
+}

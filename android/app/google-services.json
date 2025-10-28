@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "801804101759",
+    "project_id": "rice-disease--detector",
+    "storage_bucket": "rice-disease--detector.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801804101759:android:1dab291182a34014e8f74a",
+        "android_client_info": {
+          "package_name": "com.example.rice_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBni6cbV2LFOnpa4ChR0OPAP3bEtQqWdy4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

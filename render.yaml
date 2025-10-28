@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: rice-disease-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT rice_disease_api:app
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: 2
