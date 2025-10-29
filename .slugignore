@@ -1,0 +1,17 @@
+# Files to exclude from deployment
+*.md
+*.txt
+test_*
+debug_*
+tmp_*
+.git/
+.vscode/
+android/
+ios/
+linux/
+macos/
+windows/
+web/
+lib/
+pubspec.yaml
+pubspec.lock

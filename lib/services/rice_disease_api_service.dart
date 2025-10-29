@@ -5,23 +5,97 @@ import 'package:http/http.dart' as http;
 
 /// Service class for Rice Disease Detection API
 class RiceDiseaseApiService {
-  // API Configuration
-  static const String baseUrl = 'http://192.168.182.140:5000'; // Main API server
+  // API Configuration - Smart URL switching for production/development
+  static const String _productionUrl = 'https://rice-disease-detection-app-1.onrender.com';
+  static const String _developmentUrl = 'http://192.168.182.140:5000';
+  static const String _localUrl = 'http://localhost:5000'; // For local testing
+  static const bool _useProductionAPI = true; // Will automatically fallback to local if cloud fails
+  
+  /// Get the current base URL based on configuration
+  static String get baseUrl => _useProductionAPI ? _productionUrl : _localUrl;
   static const String predictEndpoint = '/predict';
   static const String healthEndpoint = '/health';
   static const String diseasesEndpoint = '/diseases';
   static const String modelInfoEndpoint = '/model-info';
   
-  // Timeout duration
-  static const Duration timeoutDuration = Duration(seconds: 30);
+  // Timeout configurations for cloud deployment
+  static const Duration _shortTimeout = Duration(seconds: 30);
+  static const Duration _longTimeout = Duration(minutes: 2); // For cloud wake-up
   
+  /// Get appropriate timeout based on operation type
+  static Duration get timeoutDuration => _useProductionAPI ? _longTimeout : _shortTimeout;
+  
+  /// Test API connectivity with smart fallback
+  static Future<String?> _findWorkingAPI() async {
+    final urlsToTry = [
+      _productionUrl,  // Try cloud first for global access
+      _localUrl,       // Fallback to local for development
+      _developmentUrl, // Last resort
+    ];
+    
+    for (String url in urlsToTry) {
+      try {
+        print('🔍 Testing API at: $url');
+        final response = await http.get(
+          Uri.parse('$url$healthEndpoint'),
+          headers: {'Content-Type': 'application/json'},
+        ).timeout(_shortTimeout);
+        
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          if (data['model_loaded'] == true) {
+            print('✅ Found working API with loaded model: $url');
+            return url;
+          } else {
+            print('⚠️ API responding but model not loaded: $url');
+          }
+        }
+      } catch (e) {
+        print('❌ API not accessible: $url - $e');
+      }
+    }
+    
+    return null;
+  }
+
+  /// Wake up the API server (important for cloud free tier)
+  static Future<bool> wakeUpAPI() async {
+    try {
+      if (_useProductionAPI) {
+        print('🚀 Waking up cloud API server...');
+        final response = await http.get(
+          Uri.parse('$_productionUrl$healthEndpoint'),
+          headers: {'Content-Type': 'application/json'},
+        ).timeout(_longTimeout);
+        
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          print('✅ Cloud API server is awake!');
+          return data['model_loaded'] == true;
+        }
+      }
+      return false;
+    } catch (e) {
+      print('❌ API wake-up failed: $e');
+      return false;
+    }
+  }
+
   /// Check API health status
   static Future<ApiResponse<HealthStatus>> checkHealth() async {
     try {
+      // Wake up API if using production cloud
+      if (_useProductionAPI) {
+        bool isAwake = await wakeUpAPI();
+        if (!isAwake) {
+          return ApiResponse.error('Cloud API server is not responding');
+        }
+      }
+      
       final response = await http.get(
         Uri.parse('$baseUrl$healthEndpoint'),
         headers: {'Content-Type': 'application/json'},
-      ).timeout(timeoutDuration);
+      ).timeout(_shortTimeout);
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -43,10 +117,20 @@ class RiceDiseaseApiService {
         return ApiResponse.error('File too large. Maximum size is 16MB.');
       }
       
+      // Find working API endpoint
+      print('🔍 Finding available API server...');
+      String? workingUrl = await _findWorkingAPI();
+      
+      if (workingUrl == null) {
+        return ApiResponse.error('No working API server found. Please ensure the API is running.');
+      }
+      
+      print('🔮 Making prediction request to: $workingUrl$predictEndpoint');
+      
       // Create multipart request
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl$predictEndpoint'),
+        Uri.parse('$workingUrl$predictEndpoint'),
       );
       
       // Add image file
@@ -55,17 +139,22 @@ class RiceDiseaseApiService {
       );
       
       // Send request
-      final streamedResponse = await request.send().timeout(timeoutDuration);
+      final streamedResponse = await request.send().timeout(_longTimeout);
       final response = await http.Response.fromStream(streamedResponse);
+      
+      print('📡 Response status: ${response.statusCode}');
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('✅ Prediction successful: ${data['prediction']['disease']}');
         return ApiResponse.success(PredictionResult.fromJson(data));
       } else {
         final errorData = json.decode(response.body);
+        print('❌ Prediction failed: ${errorData['error']}');
         return ApiResponse.error(errorData['error'] ?? 'Prediction failed');
       }
     } catch (e) {
+      print('❌ Prediction exception: $e');
       return ApiResponse.error('Prediction failed: $e');
     }
   }
@@ -73,20 +162,36 @@ class RiceDiseaseApiService {
   /// Predict disease from base64 image
   static Future<ApiResponse<PredictionResult>> predictFromBase64(String base64Image) async {
     try {
+      // Wake up API if using production cloud
+      if (_useProductionAPI) {
+        print('⏰ Ensuring cloud API is awake for base64 prediction...');
+        bool isAwake = await wakeUpAPI();
+        if (!isAwake) {
+          return ApiResponse.error('Cloud API server is not responding. Please try again.');
+        }
+      }
+      
+      print('🔮 Making base64 prediction request to: $baseUrl$predictEndpoint');
+      
       final response = await http.post(
         Uri.parse('$baseUrl$predictEndpoint'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'image_base64': base64Image}),
-      ).timeout(timeoutDuration);
+      ).timeout(_longTimeout);
+      
+      print('📡 Response status: ${response.statusCode}');
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('✅ Base64 prediction successful: ${data['prediction']['disease']}');
         return ApiResponse.success(PredictionResult.fromJson(data));
       } else {
         final errorData = json.decode(response.body);
+        print('❌ Base64 prediction failed: ${errorData['error']}');
         return ApiResponse.error(errorData['error'] ?? 'Prediction failed');
       }
     } catch (e) {
+      print('❌ Base64 prediction exception: $e');
       return ApiResponse.error('Prediction failed: $e');
     }
   }
@@ -108,7 +213,7 @@ class RiceDiseaseApiService {
       final response = await http.get(
         Uri.parse('$baseUrl$diseasesEndpoint'),
         headers: {'Content-Type': 'application/json'},
-      ).timeout(timeoutDuration);
+      ).timeout(_shortTimeout);
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -130,7 +235,7 @@ class RiceDiseaseApiService {
       final response = await http.get(
         Uri.parse('$baseUrl$modelInfoEndpoint'),
         headers: {'Content-Type': 'application/json'},
-      ).timeout(timeoutDuration);
+      ).timeout(_shortTimeout);
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -141,6 +246,37 @@ class RiceDiseaseApiService {
     } catch (e) {
       return ApiResponse.error('Failed to fetch model info: $e');
     }
+  }
+  
+  /// Get current configuration info for debugging
+  static Map<String, dynamic> getConfigInfo() {
+    return {
+      'baseUrl': baseUrl,
+      'useProductionAPI': _useProductionAPI,
+      'productionUrl': _productionUrl,
+      'developmentUrl': _developmentUrl,
+      'shortTimeout': _shortTimeout.inSeconds,
+      'longTimeout': _longTimeout.inSeconds,
+    };
+  }
+  
+  /// Test complete system connectivity
+  static Future<Map<String, bool>> testConnectivity() async {
+    final results = <String, bool>{};
+    
+    // Test health endpoint
+    final healthResponse = await checkHealth();
+    results['health'] = healthResponse.success;
+    
+    // Test diseases endpoint
+    final diseasesResponse = await getDiseases();
+    results['diseases'] = diseasesResponse.success;
+    
+    // Test model info endpoint
+    final modelResponse = await getModelInfo();
+    results['model_info'] = modelResponse.success;
+    
+    return results;
   }
 }
 

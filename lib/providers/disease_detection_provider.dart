@@ -247,7 +247,7 @@ class DiseaseDetectionProvider extends ChangeNotifier {
   DiseaseResultModel _convertApiResponseToModel(api.PredictionResult apiResult, String imagePath) {
     // Convert top predictions from API format to model format
     final topPredictions = apiResult.topPredictions.asMap().entries.map((entry) {
-      return PredictionResult(
+      return PredictionResult(  // This refers to the model's PredictionResult
         diseaseName: entry.value.disease,
         confidence: entry.value.confidence,
         rank: entry.key + 1,
