@@ -36,6 +36,26 @@ MODEL_CONFIG = {
     'preprocessing': 'standard'
 }
 
+
+def load_model_with_retry(max_retries=3):
+    """Load model with retry logic for cloud deployment"""
+    global model
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"Loading model attempt {attempt + 1}/{max_retries}...")
+            if load_model_with_retry():
+                return True
+            print(f"Attempt {attempt + 1} failed, retrying...")
+            time.sleep(5)
+        except Exception as e:
+            print(f"Attempt {attempt + 1} error: {e}")
+            time.sleep(5)
+    
+    print("❌ Failed to load model after all retries")
+    return False
+
+
 def load_model():
     """
     Load the model from local file
@@ -301,12 +321,17 @@ def test_endpoint():
         "timestamp": datetime.now().isoformat()
     })
 
+
+# Render.com port configuration
+import os
+PORT = int(os.environ.get('PORT', 5000))
+
 if __name__ == '__main__':
     print("🌾 Rice Disease Detection API")
     print("=" * 40)
     print("Loading model...")
     
-    if load_model():
+    if load_model_with_retry():
         print("✅ Model loaded successfully!")
         print(f"📊 Classes: {len(class_names)}")
         print(f"🎯 Input size: {MODEL_CONFIG['input_size']}")
@@ -322,7 +347,7 @@ if __name__ == '__main__':
         print("   - GET  /test       - Simple test")
         print("=" * 40)
         
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        app.run(debug=False, host='0.0.0.0', port=PORT)
     else:
         print("❌ Failed to load model.")
         print("\n🔧 Troubleshooting:")

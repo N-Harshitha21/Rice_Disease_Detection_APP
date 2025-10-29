@@ -3,10 +3,16 @@ services:
     name: rice-disease-api
     env: python
     buildCommand: |
+      echo "🔧 Installing requirements..."
       pip install -r requirements.txt
-      echo "Checking for model file..."
+      echo "📊 Checking model file..."
       ls -la *.h5 || echo "No .h5 files found"
-    startCommand: gunicorn --bind 0.0.0.0:$PORT rice_disease_api:app --timeout 300
+      echo "📁 Directory contents:"
+      ls -la
+      echo "🐍 Python and TensorFlow versions:"
+      python --version
+      python -c "import tensorflow as tf; print(f'TensorFlow: {tf.__version__}')"
+    startCommand: bash start.sh
     plan: free
     envVars:
       - key: PYTHON_VERSION
@@ -15,3 +21,5 @@ services:
         value: 2
       - key: MODEL_PATH
         value: rice_emergency_model.h5
+      - key: PYTHONUNBUFFERED
+        value: 1
