@@ -64,21 +64,82 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2500));
     
     if (mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.checkAuthState();
-      
-      if (mounted) {
-        if (authProvider.isAuthenticated) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-          );
-        } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-          );
-        }
-      }
+      // Skip authentication for testing - show options
+      _showTestingOptions();
     }
+  }
+  
+  void _showTestingOptions() {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '🌾 Rice Disease Detection App',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Choose how to start testing:',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 20),
+            
+            // Guest Mode Button (RECOMMENDED)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  );
+                },
+                icon: const Icon(Icons.agriculture),
+                label: const Text('Start Testing (No Login Required)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 10),
+            
+            // Login Button (May have issues)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+                icon: const Icon(Icons.login),
+                label: const Text('Try Login/Signup'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 15),
+            const Text(
+              '🔧 Testing Mode: Choose "Start Testing" for immediate access',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

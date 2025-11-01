@@ -1,0 +1,6 @@
+{
+  "primary_url": "http://localhost:5000",
+  "fallback_url": "https://rice-disease-detection-app-1.onrender.com",
+  "cloud_ready": false,
+  "deployment_time": "2025-10-30T06:47:42.038351"
+}

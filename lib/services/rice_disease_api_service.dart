@@ -8,8 +8,8 @@ class RiceDiseaseApiService {
   // API Configuration - Smart URL switching for production/development
   static const String _productionUrl = 'https://rice-disease-detection-app-1.onrender.com';
   static const String _developmentUrl = 'http://192.168.182.140:5000';
-  static const String _localUrl = 'http://localhost:5000'; // For local testing
-  static const bool _useProductionAPI = true; // Will automatically fallback to local if cloud fails
+  static const String _localUrl = 'http://192.168.182.140:5000'; // Local API on your computer
+  static const bool _useProductionAPI = true; // Try cloud first, fallback to local
   
   /// Get the current base URL based on configuration
   static String get baseUrl => _useProductionAPI ? _productionUrl : _localUrl;
@@ -28,9 +28,9 @@ class RiceDiseaseApiService {
   /// Test API connectivity with smart fallback
   static Future<String?> _findWorkingAPI() async {
     final urlsToTry = [
-      _productionUrl,  // Try cloud first for global access
-      _localUrl,       // Fallback to local for development
-      _developmentUrl, // Last resort
+      _localUrl,       // Try local first (most reliable during development)
+      _developmentUrl, // Try development URL
+      _productionUrl,  // Then cloud for global access
     ];
     
     for (String url in urlsToTry) {

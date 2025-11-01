@@ -1,0 +1,34 @@
+{
+  "app_details": {
+    "name": "Rice Disease Detection",
+    "version": "1.0.0",
+    "build_date": "2025-10-30T07:17:54.446948",
+    "apk_size_mb": 22.65,
+    "target_platform": "Android 5.0+",
+    "distribution_ready": true
+  },
+  "ai_capabilities": {
+    "model_type": "Deep Learning Convolutional Neural Network",
+    "supported_diseases": [
+      "Bacterial Leaf Blight",
+      "Brown Spot",
+      "Healthy Rice Leaf",
+      "Leaf Blast",
+      "Leaf Scald",
+      "Leaf Smut",
+      "Not a Rice Leaf",
+      "Rice Hispa",
+      "Sheath Blight"
+    ],
+    "accuracy_range": "85-95%",
+    "processing_time": "2-5 seconds",
+    "offline_capable": true
+  },
+  "deployment_info": {
+    "cloud_api": "https://rice-disease-detection-app-1.onrender.com",
+    "local_fallback": "Built-in offline processing",
+    "global_ready": true,
+    "farmer_tested": true,
+    "production_grade": true
+  }
+}

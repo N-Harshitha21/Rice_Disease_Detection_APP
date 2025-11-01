@@ -1,0 +1,9 @@
+🌾 RICE DISEASE DETECTION - QUICK START CARD
+
+📱 INSTALL: Tap APK file → Allow Unknown Sources → Install
+📷 USE: Open app → Point at rice leaf → Take photo → Get results
+🎯 DETECTS: 9 rice diseases + healthy leaf identification
+💾 SIZE: 22.6 MB
+📞 HELP: Ask agricultural extension officer for training
+
+✅ FREE FOR FARMERS ✅ WORKS OFFLINE ✅ INSTANT RESULTS

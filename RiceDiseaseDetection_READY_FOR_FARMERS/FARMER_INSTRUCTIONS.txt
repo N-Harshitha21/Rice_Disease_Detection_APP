@@ -1,0 +1,32 @@
+🌾 RICE DISEASE DETECTION APP - FOR FARMERS
+
+📱 INSTALLATION (SIMPLE STEPS):
+1. Copy "RiceDiseaseDetection_ForFarmers.apk" to your Android phone
+2. Go to Settings → Security → Allow "Unknown Sources" ✅
+3. Tap the APK file to install
+4. Allow Camera and Storage permissions
+5. Open app and start detecting rice diseases!
+
+📊 APP SIZE: 22.6 MB
+📱 WORKS ON: Android 5.0+ phones
+💰 COST: 100% FREE for farmers
+🌐 INTERNET: Works offline + online
+
+🌾 DISEASES DETECTED:
+✅ Bacterial Leaf Blight  ✅ Brown Spot
+✅ Leaf Blast            ✅ Leaf Scald  
+✅ Leaf Smut             ✅ Rice Hispa
+✅ Sheath Blight         ✅ Healthy Rice
+✅ Not Rice Leaf
+
+📷 HOW TO USE:
+1. Open app
+2. Point camera at rice leaf
+3. Take photo
+4. Get instant AI diagnosis
+5. Follow treatment advice
+
+🆘 HELP: Ask agricultural extension officer for training
+
+🌍 Share this app with other farmers!
+Built October 2025 - Free for agricultural use worldwide

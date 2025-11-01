@@ -10,19 +10,12 @@ import 'utils/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Check if Firebase is already initialized
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    // Firebase already initialized, continue
-    if (e.toString().contains('duplicate-app')) {
-      print('Firebase already initialized');
-    } else {
-      rethrow;
-    }
-  }
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  print('🌾 Rice Disease Detection App - Production Mode');
   
   runApp(const MyApp());
 }

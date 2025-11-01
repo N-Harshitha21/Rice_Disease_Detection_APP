@@ -29,13 +29,30 @@ class DiseaseResult {
   factory DiseaseResult.fromApiResponse(Map<String, dynamic> data) {
     final prediction = data['prediction'] as Map<String, dynamic>;
     
+    // Handle both demo and production API response formats
+    Map<String, double> allPreds = {};
+    if (data['all_predictions'] != null) {
+      allPreds = Map<String, double>.from(data['all_predictions']);
+    }
+    
+    // Convert top_predictions to proper format
+    List<Map<String, dynamic>> topPreds = [];
+    if (data['top_predictions'] != null) {
+      final rawTopPreds = data['top_predictions'] as List;
+      topPreds = rawTopPreds.map((pred) => {
+        'disease': pred['disease'] ?? pred['diseaseName'] ?? 'Unknown',
+        'confidence': (pred['confidence'] ?? 0.0).toDouble(),
+        'disease_type': pred['disease_type'] ?? pred['diseaseType'] ?? 'unknown',
+      }).toList();
+    }
+    
     return DiseaseResult(
       disease: prediction['disease'] ?? 'Unknown',
       confidence: (prediction['confidence'] ?? 0.0).toDouble(),
       diseaseType: prediction['disease_type'] ?? 'disease',
       treatment: prediction['treatment'] ?? 'Consult agricultural expert',
-      allPredictions: Map<String, double>.from(data['all_predictions'] ?? {}),
-      topPredictions: List<Map<String, dynamic>>.from(data['top_predictions'] ?? []),
+      allPredictions: allPreds,
+      topPredictions: topPreds,
       timestamp: DateTime.now(),
     );
   }

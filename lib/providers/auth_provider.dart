@@ -236,7 +236,7 @@ class AuthProvider extends ChangeNotifier {
     _user = UserModel(
       uid: firebaseUser.uid,
       email: firebaseUser.email ?? '',
-      fullName: firebaseUser.displayName ?? '',
+      fullName: firebaseUser.displayName ?? 'User',
       phoneNumber: firebaseUser.phoneNumber ?? '',
       isEmailVerified: firebaseUser.emailVerified,
       createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),

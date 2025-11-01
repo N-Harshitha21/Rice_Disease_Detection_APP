@@ -4,120 +4,96 @@ import base64
 import io
 from PIL import Image
 import numpy as np
-import tensorflow as tf
-from datetime import datetime
 import os
-import requests
+from datetime import datetime
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
 
 # Global variables
 model = None
-
-# RICE DISEASE CLASSES - Fixed to match your actual trained model
 class_names = [
-    'Bacterial Leaf Blight',      # maps to: bacterial_leaf_blight
-    'Brown Spot',                 # maps to: brown_spot  
-    'Healthy Rice Leaf',          # maps to: healthy
-    'Leaf Blast',                 # maps to: leaf_blast
-    'Leaf Scald',                 # maps to: leaf_scald
-    'Leaf Smut',                  # maps to: leaf_smut
-    'Not a Rice Leaf',            # maps to: not_a_rice_leaf
-    'Rice Hispa',                 # maps to: rice_hispa
-    'Sheath Blight'               # maps to: sheath_blight
+    'Bacterial Leaf Blight', 'Brown Spot', 'Healthy Rice Leaf',
+    'Leaf Blast', 'Leaf Scald', 'Leaf Smut', 'Not a Rice Leaf',
+    'Rice Hispa', 'Sheath Blight'
 ]
 
-# MODEL CONFIGURATION - Fixed for local model file
-MODEL_CONFIG = {
-    'model_path': 'rice_emergency_model.h5',  # Local model file in current directory
-    'input_size': (224, 224),
-    'rescale_factor': 1.0/255.0,
-    'preprocessing': 'standard'
-}
-
-
-def load_model_with_retry(max_retries=3):
-    """Load model with retry logic for cloud deployment"""
+def load_model_emergency():
+    """Emergency model loading with maximum compatibility"""
     global model
     
-    for attempt in range(max_retries):
-        try:
-            print(f"Loading model attempt {attempt + 1}/{max_retries}...")
-            if load_model_with_retry():
-                return True
-            print(f"Attempt {attempt + 1} failed, retrying...")
-            time.sleep(5)
-        except Exception as e:
-            print(f"Attempt {attempt + 1} error: {e}")
-            time.sleep(5)
-    
-    print("❌ Failed to load model after all retries")
-    return False
-
-
-def load_model():
-    """
-    Load the model from local file
-    """
-    global model
-    model_path = MODEL_CONFIG['model_path']
-
     try:
-        # Check if model exists locally
+        logger.info("🚀 Emergency model loading starting...")
+        
+        # Import TensorFlow with minimal config
+        import tensorflow as tf
+        logger.info(f"✅ TensorFlow {tf.__version__} imported")
+        
+        # Configure for minimal memory usage
+        tf.config.set_soft_device_placement(True)
+        
+        # Try to allocate GPU memory incrementally
+        gpus = tf.config.experimental.list_physical_devices('GPU')
+        if gpus:
+            try:
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+            except:
+                pass
+        
+        model_path = 'rice_emergency_model.h5'
+        
         if not os.path.exists(model_path):
-            print(f"❌ Model file '{model_path}' not found in current directory!")
-            print("📁 Available files:")
-            for file in os.listdir('.'):
-                if file.endswith('.h5'):
-                    print(f"   - {file}")
+            logger.error(f"❌ Model file not found: {model_path}")
             return False
-
-        # Load the model
-        print(f"Loading model from {model_path}...")
-        model = tf.keras.models.load_model(model_path)
-        print("✅ Model loaded successfully!")
-        print(f"Model input shape: {model.input_shape}")
-        print(f"Model output shape: {model.output_shape}")
+        
+        file_size = os.path.getsize(model_path)
+        logger.info(f"📊 Model file size: {file_size:,} bytes")
+        
+        if file_size < 1000000:
+            logger.error("❌ Model file too small")
+            return False
+        
+        # Load model with minimal settings
+        logger.info("📥 Loading model...")
+        model = tf.keras.models.load_model(model_path, compile=False)
+        
+        logger.info("✅ Model loaded successfully!")
+        logger.info(f"📐 Input shape: {model.input_shape}")
+        logger.info(f"📐 Output shape: {model.output_shape}")
+        
+        # Test prediction
+        test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
+        test_pred = model.predict(test_input, verbose=0)
+        logger.info(f"✅ Test prediction successful: {test_pred.shape}")
+        
         return True
-
+        
     except Exception as e:
-        print(f"❌ Error loading model: {e}")
-        print("🔧 This might be due to:")
-        print("   1. Model file corruption")
-        print("   2. TensorFlow version incompatibility")
-        print("   3. Missing dependencies")
+        logger.error(f"❌ Model loading failed: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return False
 
-def preprocess_image(image):
-    """
-    Preprocess image for prediction
-    UPDATE THIS based on your notebook's preprocessing steps
-    """
+def preprocess_image_simple(image):
+    """Simple, reliable image preprocessing"""
     try:
-        # Convert to RGB if needed
+        # Convert to RGB
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
         # Resize to model input size
-        image = image.resize(MODEL_CONFIG['input_size'])
+        image = image.resize((224, 224))
         
-        # Convert to numpy array
+        # Convert to array and normalize
         image_array = np.array(image, dtype=np.float32)
-        
-        # Apply preprocessing based on your model
-        if MODEL_CONFIG['preprocessing'] == 'standard':
-            # Standard rescaling (0-1)
-            image_array = image_array * MODEL_CONFIG['rescale_factor']
-        elif MODEL_CONFIG['preprocessing'] == 'imagenet':
-            # ImageNet preprocessing (-1 to 1)
-            image_array = image_array / 127.5 - 1
-        elif MODEL_CONFIG['preprocessing'] == 'custom':
-            # Add your custom preprocessing here
-            # Example: normalize with specific mean/std
-            mean = np.array([0.485, 0.456, 0.406])
-            std = np.array([0.229, 0.224, 0.225])
-            image_array = (image_array / 255.0 - mean) / std
+        image_array = image_array / 255.0
         
         # Add batch dimension
         image_array = np.expand_dims(image_array, axis=0)
@@ -127,231 +103,146 @@ def preprocess_image(image):
     except Exception as e:
         raise Exception(f"Image preprocessing failed: {e}")
 
-def get_disease_treatment(disease_name):
-    """Get treatment recommendations for each disease"""
+def get_treatment_info(disease_name):
+    """Get treatment for detected disease"""
     treatments = {
-        'Bacterial Leaf Blight': 'Apply copper-based bactericides (Copper oxychloride 50% WP @ 3g/L). Improve field drainage and avoid overhead irrigation. Use resistant varieties like IR64.',
-        'Brown Spot': 'Apply fungicides like Mancozeb 75% WP @ 2g/L or Carbendazim 50% WP @ 1g/L. Improve soil fertility with balanced NPK fertilizer.',
-        'Healthy Rice Leaf': 'Continue current management practices. Regular monitoring for early disease detection. Maintain proper nutrition and water management.',
-        'Leaf Blast': 'Apply systemic fungicides like Tricyclazole 75% WP @ 0.6g/L. Use blast-resistant varieties. Avoid excessive nitrogen fertilization.',
-        'Leaf scald': 'Apply fungicides at early infection stage. Remove infected plant debris. Improve air circulation in the field.',
-        'Leaf Smut': 'Apply fungicides like Tebuconazole. Remove affected tillers. Use disease-free seeds and resistant varieties.',
-        'Not a Rice Leaf': 'This appears to be not a rice leaf. Please take a photo of a rice leaf for accurate disease detection.',
-        'Rice Hispa': 'Apply insecticides like Chlorpyrifos 20% EC @ 2ml/L. Use pheromone traps. Remove grassy weeds around field boundaries.',
-        'Sheath Blight': 'Apply fungicides like Validamycin 3% L @ 2.5ml/L. Improve field drainage. Reduce plant density and apply silicon fertilizers.'
+        'Bacterial Leaf Blight': 'Apply copper-based bactericides (Copper oxychloride 50% WP @ 3g/L). Improve field drainage and avoid over-fertilization with nitrogen.',
+        'Brown Spot': 'Apply fungicides like Mancozeb 75% WP @ 2g/L. Improve soil fertility with balanced fertilizers and ensure proper water management.',
+        'Healthy Rice Leaf': 'Continue current management practices. Regular monitoring and preventive measures recommended.',
+        'Leaf Blast': 'Apply systemic fungicides like Tricyclazole 75% WP @ 0.6g/L. Remove infected debris and improve air circulation.',
+        'Leaf Scald': 'Apply fungicides at early infection stage. Remove infected plant debris and improve field hygiene.',
+        'Leaf Smut': 'Apply fungicides like Tebuconazole 25% EC @ 1ml/L. Remove and destroy affected tillers immediately.',
+        'Not a Rice Leaf': 'This appears to be not a rice leaf. Please capture clear images of rice leaves for accurate detection.',
+        'Rice Hispa': 'Apply contact insecticides like Chlorpyrifos 20% EC @ 2ml/L. Remove grassy weeds that serve as alternate hosts.',
+        'Sheath Blight': 'Apply fungicides like Validamycin 3% L @ 2.5ml/L. Improve drainage and avoid dense planting.'
     }
-    return treatments.get(disease_name, 'Consult with agricultural expert for specific treatment recommendations.')
-
-def get_confidence_level(confidence):
-    """Determine confidence level based on prediction score"""
-    if confidence >= 0.9:
-        return "Very High", "Very Reliable"
-    elif confidence >= 0.8:
-        return "High", "Reliable"
-    elif confidence >= 0.7:
-        return "Medium", "Moderately Reliable"
-    elif confidence >= 0.6:
-        return "Low", "Needs Verification"
-    else:
-        return "Very Low", "Manual Inspection Required"
+    return treatments.get(disease_name, 'Consult your local agricultural extension officer for specific treatment recommendations.')
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Check if API and model are working"""
+    """Health check endpoint"""
     return jsonify({
         "status": "healthy",
         "model_loaded": model is not None,
-        "model_config": MODEL_CONFIG if model is not None else None,
+        "version": "emergency-v1.0",
         "num_classes": len(class_names),
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "message": "🌾 Rice Disease Detection API - Emergency Cloud Version"
     })
 
 @app.route('/predict', methods=['POST'])
-def predict():
-    """Predict disease from uploaded image"""
+def predict_disease():
+    """Main prediction endpoint"""
     try:
-        # Handle file upload
+        # Check if model is loaded
+        if model is None:
+            logger.warning("Model not loaded, attempting emergency load...")
+            if not load_model_emergency():
+                return jsonify({
+                    "error": "Model loading failed. Please try again in a few moments.",
+                    "success": False
+                }), 500
+        
+        # Handle image input
+        image = None
+        
         if 'image' in request.files:
+            # File upload
             image_file = request.files['image']
             if image_file.filename == '':
                 return jsonify({"error": "No image file selected"}), 400
             image = Image.open(image_file)
             
-        # Handle base64 image
         elif request.is_json and 'image_base64' in request.json:
+            # Base64 image
             try:
                 image_data = base64.b64decode(request.json['image_base64'])
                 image = Image.open(io.BytesIO(image_data))
             except Exception as e:
                 return jsonify({"error": f"Invalid base64 image: {str(e)}"}), 400
         else:
-            return jsonify({"error": "No image provided. Send as 'image' file or 'image_base64' in JSON"}), 400
-
-        if model is None:
-            return jsonify({"error": "Model not loaded. Check server logs."}), 500
+            return jsonify({"error": "No image provided. Send as 'image' file or 'image_base64' in JSON."}), 400
 
         # Preprocess image
-        try:
-            processed_image = preprocess_image(image)
-        except Exception as e:
-            return jsonify({"error": f"Image preprocessing failed: {str(e)}"}), 400
+        processed_image = preprocess_image_simple(image)
         
         # Make prediction
-        try:
-            predictions = model.predict(processed_image, verbose=0)[0]
-        except Exception as e:
-            return jsonify({"error": f"Model prediction failed: {str(e)}"}), 500
+        logger.info("🔮 Making prediction...")
+        predictions = model.predict(processed_image, verbose=0)[0]
         
-        # Get top prediction
+        # Get results
         predicted_class_idx = np.argmax(predictions)
         predicted_disease = class_names[predicted_class_idx]
         confidence = float(predictions[predicted_class_idx])
         
-        # Get confidence level and reliability
-        confidence_level, reliability = get_confidence_level(confidence)
+        logger.info(f"✅ Prediction: {predicted_disease} ({confidence:.2f})")
         
-        # Get top 3 predictions
-        top_indices = np.argsort(predictions)[-3:][::-1]
-        top_predictions = []
-        
-        for idx in top_indices:
-            top_predictions.append({
-                "disease": class_names[idx],
-                "confidence": float(predictions[idx])
-            })
-        
-        # All predictions
-        all_predictions = {}
-        for i, class_name in enumerate(class_names):
-            all_predictions[class_name] = float(predictions[i])
-        
-        # Get treatment
-        treatment = get_disease_treatment(predicted_disease)
-        
-        # Determine disease type
-        disease_type = "healthy" if "healthy" in predicted_disease.lower() else "disease"
-        
+        # Prepare response
         result = {
             "success": True,
             "prediction": {
                 "disease": predicted_disease,
-                "disease_type": disease_type,
                 "confidence": confidence,
-                "confidence_level": confidence_level,
-                "reliability": reliability,
-                "treatment": treatment,
-                "is_valid_input": True
+                "treatment": get_treatment_info(predicted_disease),
+                "all_predictions": {
+                    class_names[i]: float(predictions[i]) 
+                    for i in range(len(class_names))
+                }
             },
-            "top_predictions": top_predictions,
-            "all_predictions": all_predictions,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "version": "emergency-v1.0"
         }
         
         return jsonify(result)
         
     except Exception as e:
-        return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
+        logger.error(f"❌ Prediction error: {e}")
+        return jsonify({
+            "error": f"Prediction failed: {str(e)}",
+            "success": False
+        }), 500
+
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint"""
+    return jsonify({
+        "message": "🌾 Rice Disease Detection API - Emergency Cloud Version",
+        "status": "running",
+        "model_loaded": model is not None,
+        "version": "emergency-v1.0",
+        "endpoints": {
+            "health": "/health - Check API status",
+            "predict": "/predict - Detect rice diseases",
+            "root": "/ - This information"
+        },
+        "info": "Optimized for cloud deployment with reliable model loading"
+    })
 
 @app.route('/diseases', methods=['GET'])
 def get_diseases():
-    """Get all supported diseases"""
-    diseases = []
-    for disease_name in class_names:
-        disease_type = "healthy" if "healthy" in disease_name.lower() else "disease"
-        diseases.append({
-            "name": disease_name,
-            "type": disease_type,
-            "treatment": get_disease_treatment(disease_name)
+    """Get list of detectable diseases"""
+    diseases_info = []
+    for disease in class_names:
+        diseases_info.append({
+            "name": disease,
+            "treatment": get_treatment_info(disease)
         })
     
-    return jsonify({"diseases": diseases})
-
-@app.route('/model-info', methods=['GET'])
-def get_model_info():
-    """Get model information"""
-    if model is None:
-        return jsonify({"error": "Model not loaded"}), 500
-    
-    try:
-        # Get model info
-        input_shape = model.input_shape[1:]  # Remove batch dimension
-        total_params = model.count_params()
-        
-        return jsonify({
-            "model_info": {
-                "architecture": "Rice Disease Detection Model (Kaggle)",
-                "input_size": list(input_shape),
-                "num_classes": len(class_names),
-                "classes": class_names,
-                "model_file": MODEL_CONFIG['model_path'],
-                "parameters": int(total_params),
-                "preprocessing": MODEL_CONFIG['preprocessing'],
-                "input_resolution": MODEL_CONFIG['input_size']
-            }
-        })
-    except Exception as e:
-        return jsonify({"error": f"Failed to get model info: {str(e)}"}), 500
-
-@app.route('/', methods=['GET'])
-def root_endpoint():
-    """Root endpoint"""
     return jsonify({
-        "message": "🌾 Rice Disease Detection API",
-        "status": "running",
-        "model_loaded": model is not None,
-        "version": "1.0.0",
-        "endpoints": {
-            "health": "/health",
-            "predict": "/predict", 
-            "diseases": "/diseases",
-            "model_info": "/model-info",
-            "test": "/test"
-        },
-        "documentation": "Use POST /predict with image file or base64 data",
-        "timestamp": datetime.now().isoformat()
+        "diseases": diseases_info,
+        "total_classes": len(class_names)
     })
 
-@app.route('/test', methods=['GET'])
-def test_endpoint():
-    """Simple test endpoint"""
-    return jsonify({
-        "message": "Rice Disease API is working!",
-        "model_loaded": model is not None,
-        "endpoints": ["/health", "/predict", "/diseases", "/model-info", "/test"],
-        "timestamp": datetime.now().isoformat()
-    })
+# Initialize model on startup
+logger.info("🚀 Starting Rice Disease Detection API - Emergency Version")
+logger.info("📊 Attempting model load on startup...")
 
-
-# Render.com port configuration
-import os
-PORT = int(os.environ.get('PORT', 5000))
+if load_model_emergency():
+    logger.info("✅ Startup model loading successful!")
+else:
+    logger.warning("⚠️ Startup model loading failed - will retry on first request")
 
 if __name__ == '__main__':
-    print("🌾 Rice Disease Detection API")
-    print("=" * 40)
-    print("Loading model...")
-    
-    if load_model_with_retry():
-        print("✅ Model loaded successfully!")
-        print(f"📊 Classes: {len(class_names)}")
-        print(f"🎯 Input size: {MODEL_CONFIG['input_size']}")
-        print("🚀 Starting Flask API server...")
-        print("📍 API will be available at:")
-        print("   - Local: http://localhost:5000")
-        print("   - Network: http://YOUR_IP:5000")
-        print("\n🔗 Test endpoints:")
-        print("   - GET  /health     - Check API status")
-        print("   - POST /predict    - Predict disease")
-        print("   - GET  /diseases   - List all diseases")
-        print("   - GET  /model-info - Model information")
-        print("   - GET  /test       - Simple test")
-        print("=" * 40)
-        
-        app.run(debug=False, host='0.0.0.0', port=PORT)
-    else:
-        print("❌ Failed to load model.")
-        print("\n🔧 Troubleshooting:")
-        print("1. Check if your .h5 model file is in the current directory")
-        print("2. Update MODEL_CONFIG['model_path'] with correct filename")
-        print("3. Make sure the model file is compatible with current TensorFlow version")
-        print("4. Run extract_model_info.py to analyze your notebook")
+    port = int(os.environ.get('PORT', 5000))
+    logger.info(f"🌐 Starting server on port {port}")
+    app.run(debug=False, host='0.0.0.0', port=port)

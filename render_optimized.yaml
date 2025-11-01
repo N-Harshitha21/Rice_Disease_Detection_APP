@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: rice-disease-api-optimized
+    env: python
+    buildCommand: |
+      echo "🔧 Installing requirements..."
+      pip install -r requirements.txt
+      echo "📊 Checking model file..."
+      ls -la *.h5 || echo "No .h5 files found"
+      echo "🐍 Python and TensorFlow versions:"
+      python --version
+      python -c "import tensorflow as tf; print(f'TensorFlow: {tf.__version__}')"
+    startCommand: bash start_optimized.sh
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: 2
+      - key: MODEL_PATH
+        value: rice_emergency_model.h5
+      - key: PYTHONUNBUFFERED
+        value: 1

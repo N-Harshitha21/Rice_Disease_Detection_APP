@@ -1,0 +1,14 @@
+{
+  "type": "rice_disease_app",
+  "download_url": "Direct APK download",
+  "app_name": "Rice Disease Detection",
+  "version": "1.0.0",
+  "size_mb": 22.6,
+  "platform": "Android 5.0+",
+  "features": [
+    "AI disease detection",
+    "9 rice diseases supported",
+    "Offline capability",
+    "Free for farmers"
+  ]
+}

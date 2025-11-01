@@ -1,1 +1,1 @@
-web: gunicorn --bind 0.0.0.0:$PORT rice_disease_api:app
+web: gunicorn --bind 0.0.0.0:$PORT --timeout 300 --workers 1 --max-requests 100 --preload rice_disease_api:app

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: rice-disease-emergency
+    env: python
+    buildCommand: |
+      echo "🔧 Emergency build starting..."
+      pip install --upgrade pip
+      pip install -r requirements_emergency.txt
+      echo "📊 Model file check:"
+      ls -la *.h5
+      echo "🐍 Environment:"
+      python --version
+      python -c "import tensorflow as tf; print(f'TensorFlow: {tf.__version__}')"
+    startCommand: bash start_emergency.sh
+    plan: starter
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: 2
+      - key: PYTHONUNBUFFERED
+        value: 1

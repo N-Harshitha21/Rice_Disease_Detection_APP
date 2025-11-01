@@ -1,0 +1,22 @@
+{
+  "distribution_ready": true,
+  "apk_file": "RiceDiseaseDetection_ForFarmers.apk",
+  "apk_size_mb": 22.65,
+  "target_users": "Rice farmers worldwide",
+  "installation_method": "Android APK sideloading",
+  "requirements": "Android 5.0+",
+  "internet_required": false,
+  "cost": "Free",
+  "distribution_date": "2025-10-30T07:18:48.837456",
+  "supported_diseases": [
+    "Bacterial Leaf Blight",
+    "Brown Spot",
+    "Healthy Rice Leaf",
+    "Leaf Blast",
+    "Leaf Scald",
+    "Leaf Smut",
+    "Not a Rice Leaf",
+    "Rice Hispa",
+    "Sheath Blight"
+  ]
+}

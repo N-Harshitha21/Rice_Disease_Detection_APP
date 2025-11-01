@@ -18,10 +18,10 @@ class DiseaseDetectionService {
   static const String _productionUrl = 'https://rice-disease-detection-app-1.onrender.com';
   
   /// Local development API URL
-  static const String _localUrl = 'http://192.168.182.140:5000';
+  static const String _localUrl = 'http://localhost:5000';
   
   /// Switch between production and local API  
-  static const bool _useProductionAPI = true; // Set to true for cloud deployment
+  static const bool _useProductionAPI = false; // Set to true for cloud deployment
   
   /// Demo mode for testing UI without API calls
   static const bool _useRealAPI = true; // Set to false for demo mode

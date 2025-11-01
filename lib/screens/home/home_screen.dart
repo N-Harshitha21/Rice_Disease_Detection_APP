@@ -7,6 +7,8 @@ import '../detection/camera_screen.dart';
 import '../detection/history_screen.dart';
 import '../detection/statistics_screen.dart';
 import '../profile/profile_screen.dart';
+import '../disease_info/disease_info_screen.dart';
+import '../disease_info/prevention_tips_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -217,7 +219,11 @@ class HomeTab extends StatelessWidget {
               subtitle: 'Learn about 8 major rice diseases',
               icon: Icons.info_outline,
               onTap: () {
-                // Navigate to disease info screen
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const DiseaseInfoScreen(),
+                  ),
+                );
               },
             ),
 
@@ -228,7 +234,11 @@ class HomeTab extends StatelessWidget {
               subtitle: 'Best practices for healthy crops',
               icon: Icons.tips_and_updates,
               onTap: () {
-                // Navigate to tips screen
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PreventionTipsScreen(),
+                  ),
+                );
               },
             ),
           ],
